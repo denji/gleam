@@ -415,7 +415,7 @@ x() ->
 
     // Custom type creation
     assert_erl!(
-        r#"type Pair(x, y) { Pair(x: x, y: y) } fn x() { Pair(1, 2) Pair(3., 4.) }"#,
+        r#"pub type Pair(x, y) { Pair(x: x, y: y) } fn x() { Pair(1, 2) Pair(3., 4.) }"#,
         r#"-module(the_app).
 -compile(no_auto_import).
 
@@ -431,7 +431,7 @@ x() ->
     );
 
     assert_erl!(
-        r#"type Null { Null } fn x() { Null }"#,
+        r#"pub type Null { Null } fn x() { Null }"#,
         r#"-module(the_app).
 -compile(no_auto_import).
 
@@ -446,7 +446,7 @@ x() ->
     );
 
     assert_erl!(
-        r#"type Point { Point(x: Int, y: Int) }
+        r#"pub type Point { Point(x: Int, y: Int) }
                 fn y() { fn() { Point }()(4, 6) }"#,
         r#"-module(the_app).
 -compile(no_auto_import).
@@ -462,7 +462,7 @@ y() ->
     );
 
     assert_erl!(
-        r#"type Point { Point(x: Int, y: Int) }
+        r#"pub type Point { Point(x: Int, y: Int) }
                 fn x() { Point(x: 4, y: 6) Point(y: 1, x: 9) }"#,
         r#"-module(the_app).
 -compile(no_auto_import).
@@ -479,7 +479,7 @@ x() ->
     );
 
     assert_erl!(
-        r#"type Point { Point(x: Int, y: Int) } fn x(y) { let Point(a, b) = y a }"#,
+        r#"pub type Point { Point(x: Int, y: Int) } fn x(y) { let Point(a, b) = y a }"#,
         r#"-module(the_app).
 -compile(no_auto_import).
 
@@ -494,7 +494,7 @@ x(Y) ->
 "#,
     );
 
-    // Private external function calls are simply inlined
+    // Private external function calls are inlined
     assert_erl!(
         r#"external fn go(x: Int, y: Int) -> Int = "m" "f"
                     fn x() { go(x: 1, y: 2) go(y: 3, x: 4) }"#,
@@ -562,7 +562,7 @@ x() ->
     // https://github.com/gleam-lang/gleam/issues/289
     assert_erl!(
         r#"
-type User { User(id: Int, name: String, age: Int) }
+pub type User { User(id: Int, name: String, age: Int) }
 fn create_user(user_id) { User(age: 22, id: user_id, name: "") }
                     "#,
         r#"-module(the_app).
@@ -593,7 +593,7 @@ run() ->
     );
 
     assert_erl!(
-        r#"type X { X(x: Int, y: Float) }
+        r#"pub type X { X(x: Int, y: Float) }
                     fn x() { X(x: 1, y: 2.) X(y: 3., x: 4) }"#,
         r#"-module(the_app).
 -compile(no_auto_import).
@@ -1290,7 +1290,7 @@ main() ->
 
     assert_erl!(
         r#"
-    type Test { Test(x: Int, y: Float) }
+    pub type Test { Test(x: Int, y: Float) }
     pub fn main() {
       let x = Test(1, 3.0)
       case x {
@@ -1490,7 +1490,7 @@ fn record_spread() {
     // Test binding to a record field with the spread operator
     assert_erl!(
         r#"
-type Triple {
+pub type Triple {
     Triple(a: Int, b: Int, c: Int)
 }
 
@@ -1518,7 +1518,7 @@ main() ->
     // Test binding to a record field with the spread operator and a labelled argument
     assert_erl!(
         r#"
-type Triple {
+pub type Triple {
   Triple(a: Int, b: Int, c: Int)
 }
 
@@ -1546,7 +1546,7 @@ main() ->
     // Test binding to a record field with the spread operator with both a labelled argument and a positional argument
     assert_erl!(
         r#"
-type Triple {
+pub type Triple {
   Triple(a: Int, b: Int, c: Int)
 }
 
@@ -1574,7 +1574,7 @@ main() ->
     // Test binding to a record field with the spread operator in a match
     assert_erl!(
         r#"
-type Triple {
+pub type Triple {
   Triple(a: Int, b: Int, c: Int)
 }
 
@@ -1694,7 +1694,7 @@ fn field_access_function_call() {
     // Parentheses are added when calling functions returned by record access
     assert_erl!(
         r#"
-type FnBox {
+pub type FnBox {
   FnBox(f: fn(Int) -> Int)
 }
 fn main() {
@@ -2622,4 +2622,30 @@ go() ->
     );
 
     // TODO: patterns that are just vars don't render a case expression
+}
+
+// https://github.com/gleam-lang/gleam/issues/941
+#[test]
+fn no_export_private_type() {
+    assert_erl!(
+        "external type X",
+        "-module(the_app).
+-compile(no_auto_import).
+
+-type x() :: any().
+
+
+"
+    );
+
+    assert_erl!(
+        "type X { X }",
+        "-module(the_app).
+-compile(no_auto_import).
+
+-type x() :: x.
+
+
+"
+    );
 }

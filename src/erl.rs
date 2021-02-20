@@ -195,13 +195,16 @@ pub fn module(
                 ..
             } => exports.push(atom(name.to_string()).append("/").append(args.len())),
 
-            Statement::ExternalType { name, args, .. } => {
-                // Type Exports
-                type_exports.push(
-                    Document::String(erl_safe_type_name(name.to_snake_case()))
-                        .append("/")
-                        .append(args.len()),
-                );
+            Statement::ExternalType {
+                name, args, public, ..
+            } => {
+                if *public {
+                    type_exports.push(
+                        Document::String(erl_safe_type_name(name.to_snake_case()))
+                            .append("/")
+                            .append(args.len()),
+                    );
+                }
                 // phantom variant
                 let phantom = if args.is_empty() {
                     nil()
@@ -235,6 +238,7 @@ pub fn module(
                 constructors,
                 typed_parameters,
                 opaque,
+                public,
                 ..
             } => {
                 // Erlang doesn't allow phantom type variables in type definitions but gleam does
@@ -268,12 +272,13 @@ pub fn module(
                         ),
                     ))
                 };
-                // Type Exports
-                type_exports.push(
-                    Document::String(erl_safe_type_name(name.to_snake_case()))
-                        .append("/")
-                        .append(typed_parameters.len()),
-                );
+                if *public {
+                    type_exports.push(
+                        Document::String(erl_safe_type_name(name.to_snake_case()))
+                            .append("/")
+                            .append(typed_parameters.len()),
+                    );
+                }
                 // Type definitions
                 let constructors = concat(
                     constructors
