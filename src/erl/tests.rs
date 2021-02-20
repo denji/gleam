@@ -2624,7 +2624,7 @@ go() ->
     // TODO: patterns that are just vars don't render a case expression
 }
 
-// https://github.com/gleam-lang/gleam/issues/941
+// https://github.com/gleam-lang/gleam/issues/940
 #[test]
 fn no_export_private_type() {
     assert_erl!(
